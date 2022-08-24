@@ -1,0 +1,36 @@
+global proc AEraycastTemplate( string $nodeName )
+{
+    // the following controls will be in a scrollable layout
+    editorTemplate -beginScrollLayout;
+
+        editorTemplate -beginLayout "Input Properties" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            editorTemplate -addControl "envelope";
+            editorTemplate -addControl "along";
+            editorTemplate -addControl "bidirectional";
+            editorTemplate -addControl "reverse";
+            editorTemplate -endNoOptimize;
+            editorTemplate -addControl "useDistance";
+            editorTemplate -addControl "useNormal";
+			editorTemplate -addControl "inputMatrix";
+
+        editorTemplate -endLayout;
+
+        editorTemplate -beginLayout "Output Properties" -collapse 0;
+			editorTemplate -addControl "hit";
+			editorTemplate -addControl "hitDistance";
+            editorTemplate -addControl "outputMatrix";
+            editorTemplate -dimControl $nodeName "hit" 1;
+			editorTemplate -dimControl $nodeName "hitDistance" 1;
+			editorTemplate -dimControl $nodeName "outputMatrix" 1;
+
+        editorTemplate -endLayout;
+
+        // include/call base class/node attributes
+        AEdependNodeTemplate $nodeName;
+
+        // add any extra attributes that have been added
+        editorTemplate -addExtraControls;
+
+    editorTemplate -endScrollLayout;
+}
