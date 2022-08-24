@@ -7,8 +7,8 @@ MObject RaycastNode::aEnvelope;
 MObject RaycastNode::aAlong;
 MObject RaycastNode::aBidirectional;
 MObject RaycastNode::aReverse;
-MObject RaycastNode::aUseTranslate;
-MObject RaycastNode::aUseRotate;
+MObject RaycastNode::aUseDistance;
+MObject RaycastNode::aUseNormal;
 MObject RaycastNode::aInputMatrix;
 MObject RaycastNode::aInputMesh;
 MObject RaycastNode::aInputSurface;
@@ -21,7 +21,7 @@ const MString RaycastNode::kName("raycast");
 
 
 template <class T>
-T getMatrixRow(MMatrix &matrix, const int row)
+T getMatrixRow(MMatrix& matrix, const int& row)
 {
 	T result;
 	for (int i = 0; i < 3; i++) {
@@ -31,7 +31,7 @@ T getMatrixRow(MMatrix &matrix, const int row)
 }
 
 template <class T>
-void setMatrixRow(MMatrix &matrix, const int row, T value)
+void setMatrixRow(MMatrix& matrix, const int& row, const T& value)
 {
 	for (int i = 0; i < 3; i++) {
 		matrix[row][i] = value[i];
@@ -42,110 +42,114 @@ void setMatrixRow(MMatrix &matrix, const int row, T value)
 MStatus RaycastNode::initialize() {
 	MStatus status;
 
-	MFnEnumAttribute enumAttrFn;
-	MFnTypedAttribute typedAttrFn;
-	MFnMatrixAttribute matrixAttrFn;
-	MFnNumericAttribute numericAttrFn;
+	MFnEnumAttribute fnEnumAttr;
+	MFnTypedAttribute fnTypedAttr;
+	MFnMatrixAttribute fnMatrixAttr;
+	MFnNumericAttribute fnNumericAttr;
 
-	aEnvelope = numericAttrFn.create("envelope", "envelope", MFnNumericData::kDouble, 1);
-	numericAttrFn.setMin(0);
-	numericAttrFn.setMax(1);
-	numericAttrFn.setStorable(true);
-	numericAttrFn.setKeyable(true);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(true);
+	aEnvelope = fnNumericAttr.create("envelope", "envelope", MFnNumericData::kFloat, 1);
+	fnNumericAttr.setMin(0);
+	fnNumericAttr.setMax(1);
+	fnNumericAttr.setStorable(true);
+	fnNumericAttr.setKeyable(true);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(true);
 	addAttribute(aEnvelope);
 
-	aAlong = enumAttrFn.create("along", "along", 0);
-	enumAttrFn.addField("x", 0);
-	enumAttrFn.addField("y", 1);
-	enumAttrFn.addField("z", 2);
-	enumAttrFn.setStorable(true);
-	enumAttrFn.setKeyable(true);
-	enumAttrFn.setReadable(true);
-	enumAttrFn.setWritable(true);
+	aAlong = fnEnumAttr.create("along", "along", 0);
+	fnEnumAttr.addField("x", 0);
+	fnEnumAttr.addField("y", 1);
+	fnEnumAttr.addField("z", 2);
+	fnEnumAttr.setStorable(true);
+	fnEnumAttr.setKeyable(true);
+	fnEnumAttr.setReadable(true);
+	fnEnumAttr.setWritable(true);
 	addAttribute(aAlong);
 
-	aBidirectional = numericAttrFn.create("bidirectional", "bidirectional", MFnNumericData::kBoolean, true);
-	numericAttrFn.setStorable(true);
-	numericAttrFn.setKeyable(true);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(true);
+	aBidirectional = fnNumericAttr.create("bidirectional", "bidirectional", MFnNumericData::kBoolean, true);
+	fnNumericAttr.setStorable(true);
+	fnNumericAttr.setKeyable(true);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(true);
 	addAttribute(aBidirectional);
 
-	aReverse = numericAttrFn.create("reverse", "reverse", MFnNumericData::kBoolean, false);
-	numericAttrFn.setStorable(true);
-	numericAttrFn.setKeyable(true);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(true);
+	aReverse = fnNumericAttr.create("reverse", "reverse", MFnNumericData::kBoolean, false);
+	fnNumericAttr.setStorable(true);
+	fnNumericAttr.setKeyable(true);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(true);
 	addAttribute(aReverse);
 
-	aUseTranslate = numericAttrFn.create("useTranslate", "useTranslate", MFnNumericData::kBoolean, true);
-	numericAttrFn.setStorable(true);
-	numericAttrFn.setKeyable(true);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(true);
-	addAttribute(aUseTranslate);
+	aUseDistance = fnNumericAttr.create("useDistance", "useDistance", MFnNumericData::kFloat, 1);
+	fnNumericAttr.setMin(0);
+	fnNumericAttr.setMax(1);
+	fnNumericAttr.setStorable(true);
+	fnNumericAttr.setKeyable(true);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(true);
+	addAttribute(aUseDistance);
 
-	aUseRotate = numericAttrFn.create("useRotate", "useRotate", MFnNumericData::kBoolean, false);
-	numericAttrFn.setStorable(true);
-	numericAttrFn.setKeyable(true);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(true);
-	addAttribute(aUseRotate);
+	aUseNormal = fnNumericAttr.create("useNormal", "useNormal", MFnNumericData::kFloat, 0);
+	fnNumericAttr.setMin(0);
+	fnNumericAttr.setMax(1);
+	fnNumericAttr.setStorable(true);
+	fnNumericAttr.setKeyable(true);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(true);
+	addAttribute(aUseNormal);
 
-	aInputMatrix = matrixAttrFn.create("inputMatrix", "inputMatrix", MFnMatrixAttribute::kDouble);
-	matrixAttrFn.setStorable(true);
-	matrixAttrFn.setKeyable(true);
-	matrixAttrFn.setReadable(false);
-	matrixAttrFn.setWritable(true);
+	aInputMatrix = fnMatrixAttr.create("inputMatrix", "inputMatrix", MFnMatrixAttribute::kDouble);
+	fnMatrixAttr.setStorable(true);
+	fnMatrixAttr.setKeyable(true);
+	fnMatrixAttr.setReadable(false);
+	fnMatrixAttr.setWritable(true);
 	addAttribute(aInputMatrix);
 
-	aInputMesh = typedAttrFn.create("inputMesh", "inputMesh", MFnData::kMesh);
-	typedAttrFn.setArray(true);
-	typedAttrFn.setStorable(true);
-	typedAttrFn.setKeyable(false);
-	typedAttrFn.setReadable(false);
-	typedAttrFn.setWritable(true);
-	typedAttrFn.setCached(false);
+	aInputMesh = fnTypedAttr.create("inputMesh", "inputMesh", MFnData::kMesh);
+	fnTypedAttr.setArray(true);
+	fnTypedAttr.setStorable(true);
+	fnTypedAttr.setKeyable(false);
+	fnTypedAttr.setReadable(false);
+	fnTypedAttr.setWritable(true);
+	fnTypedAttr.setCached(false);
 	addAttribute(aInputMesh);
 
-	aInputSurface = typedAttrFn.create("inputSurface", "inputSurface", MFnData::kNurbsSurface);
-	typedAttrFn.setArray(true);
-	typedAttrFn.setStorable(true);
-	typedAttrFn.setKeyable(false);
-	typedAttrFn.setReadable(false);
-	typedAttrFn.setWritable(true);
-	typedAttrFn.setCached(false);
+	aInputSurface = fnTypedAttr.create("inputSurface", "inputSurface", MFnData::kNurbsSurface);
+	fnTypedAttr.setArray(true);
+	fnTypedAttr.setStorable(true);
+	fnTypedAttr.setKeyable(false);
+	fnTypedAttr.setReadable(false);
+	fnTypedAttr.setWritable(true);
+	fnTypedAttr.setCached(false);
 	addAttribute(aInputSurface);
 
-	aOutputMatrix = matrixAttrFn.create("outputMatrix", "outputMatrix", MFnMatrixAttribute::kDouble);
-	matrixAttrFn.setStorable(false);
-	matrixAttrFn.setKeyable(false);
-	matrixAttrFn.setReadable(true);
-	matrixAttrFn.setWritable(false);
+	aOutputMatrix = fnMatrixAttr.create("outputMatrix", "outputMatrix", MFnMatrixAttribute::kDouble);
+	fnMatrixAttr.setStorable(false);
+	fnMatrixAttr.setKeyable(false);
+	fnMatrixAttr.setReadable(true);
+	fnMatrixAttr.setWritable(false);
 	addAttribute(aOutputMatrix);
 
-	aHit = numericAttrFn.create("hit", "hit", MFnNumericData::kBoolean, false);
-	numericAttrFn.setStorable(false);
-	numericAttrFn.setKeyable(false);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(false);
+	aHit = fnNumericAttr.create("hit", "hit", MFnNumericData::kBoolean, false);
+	fnNumericAttr.setStorable(false);
+	fnNumericAttr.setKeyable(false);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(false);
 	addAttribute(aHit);
 
-	aHitDistance = numericAttrFn.create("hitDistance", "hitDistance", MFnNumericData::kDouble, -1);
-	numericAttrFn.setStorable(false);
-	numericAttrFn.setKeyable(false);
-	numericAttrFn.setReadable(true);
-	numericAttrFn.setWritable(false);
+	aHitDistance = fnNumericAttr.create("hitDistance", "hitDistance", MFnNumericData::kFloat, -1);
+	fnNumericAttr.setStorable(false);
+	fnNumericAttr.setKeyable(false);
+	fnNumericAttr.setReadable(true);
+	fnNumericAttr.setWritable(false);
 	addAttribute(aHitDistance);
 
 	attributeAffects(aEnvelope, aOutputMatrix);
 	attributeAffects(aAlong, aOutputMatrix);
 	attributeAffects(aBidirectional, aOutputMatrix);
 	attributeAffects(aReverse, aOutputMatrix);
-	attributeAffects(aUseTranslate, aOutputMatrix);
-	attributeAffects(aUseRotate, aOutputMatrix);
+	attributeAffects(aUseDistance, aOutputMatrix);
+	attributeAffects(aUseNormal, aOutputMatrix);
 	attributeAffects(aInputMatrix, aOutputMatrix);
 	attributeAffects(aInputMesh, aOutputMatrix);
 	attributeAffects(aInputSurface, aOutputMatrix);
@@ -154,8 +158,8 @@ MStatus RaycastNode::initialize() {
 	attributeAffects(aAlong, aHit);
 	attributeAffects(aBidirectional, aHit);
 	attributeAffects(aReverse, aHit);
-	attributeAffects(aUseTranslate, aHit);
-	attributeAffects(aUseRotate, aHit);
+	attributeAffects(aUseDistance, aHit);
+	attributeAffects(aUseNormal, aHit);
 	attributeAffects(aInputMatrix, aHit);
 	attributeAffects(aInputMesh, aHit);
 	attributeAffects(aInputSurface, aHit);
@@ -164,8 +168,8 @@ MStatus RaycastNode::initialize() {
 	attributeAffects(aAlong, aHitDistance);
 	attributeAffects(aBidirectional, aHitDistance);
 	attributeAffects(aReverse, aHitDistance);
-	attributeAffects(aUseTranslate, aHitDistance);
-	attributeAffects(aUseRotate, aHitDistance);
+	attributeAffects(aUseDistance, aHitDistance);
+	attributeAffects(aUseNormal, aHitDistance);
 	attributeAffects(aInputMatrix, aHitDistance);
 	attributeAffects(aInputMesh, aHitDistance);
 	attributeAffects(aInputSurface, aHitDistance);
@@ -188,7 +192,7 @@ RaycastNode::~RaycastNode() {
 
 
 MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
-	if (plug != aOutputMatrix && plug != aHit) {
+	if (plug != aOutputMatrix && plug != aHit && plug != aHitDistance) {
 		return MS::kUnknownParameter;
 	}
 
@@ -200,13 +204,13 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 	MVector normal;
 
 	// input attributes
-	MDataHandle dEvelope = data.inputValue(aEnvelope, &status);
+	MDataHandle dEnvelope = data.inputValue(aEnvelope, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	double envelope = dEvelope.asDouble();
+	float envelope = dEnvelope.asFloat();
 
 	MDataHandle dAlong = data.inputValue(aAlong, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	int along = dAlong.asShort();
+	short along = dAlong.asShort();
 
 	MDataHandle dReverse = data.inputValue(aReverse, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -216,13 +220,13 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 	bool bidirectional = dBidirectional.asBool();
 
-	MDataHandle dUseTranslate = data.inputValue(aUseTranslate, &status);
+	MDataHandle dUseDistance = data.inputValue(aUseDistance, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	bool useTranslate = dUseTranslate.asBool();
+	float useDistance = dUseDistance.asFloat() * envelope;
 
-	MDataHandle dUseRotate = data.inputValue(aUseRotate, &status);
+	MDataHandle dUseNormal = data.inputValue(aUseNormal, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	bool useRotate = dUseRotate.asBool();
+	float useNormal = dUseNormal.asFloat() * envelope;
 
 	MDataHandle dInputMatrix = data.inputValue(aInputMatrix, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -244,7 +248,7 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 	MDataHandle dHitDistance = data.outputValue(aHitDistance, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	// calculate origin and direction
+	// get origin and directions
 	MVector origin = getMatrixRow<MVector>(inputMatrix, 3);
 	MVector direction;
 	MVectorArray directions;
@@ -257,59 +261,10 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 		directions.append(direction * -1);
 	}
 
-	// calculate intersections
-	if (envelope) {
-		for (int i = 0; i < dInputMeshArray.elementCount(); i++) {
-			MDataHandle dInputMesh = dInputMeshArray.inputValue();
-			MObject oInputMesh = dInputMesh.asMesh();
-
-			if (!oInputMesh.isNull()) {
-				MFnMesh fnInputMesh(oInputMesh, &status);
-				CHECK_MSTATUS_AND_RETURN_IT(status);
-
-				float hitRayParam;
-				float hitBary1;
-				float hitBary2;
-				int hitFace;
-				int hitTriangle;
-				MFloatPoint hitPoint;
-				MMeshIsectAccelParams accelerator = fnInputMesh.autoUniformGridParams();
-
-				bool _hit = fnInputMesh.closestIntersection(
-					MFloatPoint(origin),
-					MFloatVector(direction),
-					NULL,
-					NULL,
-					false,
-					MSpace::kWorld,
-					hitDistance,
-					bidirectional,
-					&accelerator,
-					hitPoint,
-					&hitRayParam,
-					&hitFace,
-					&hitTriangle,
-					&hitBary1,
-					&hitBary2,
-					(float)1e-6,
-					&status
-				);
-				CHECK_MSTATUS_AND_RETURN_IT(status);
-
-				if (_hit) {
-					point = MVector(hitPoint);
-					hit = true;
-					hitDistance = (point - origin).length();
-
-					if (useRotate) {
-						status = fnInputMesh.getPolygonNormal(hitFace, normal, MSpace::kWorld);
-						CHECK_MSTATUS_AND_RETURN_IT(status);
-					}
-				}
-			}
-			dInputMeshArray.next();
-		}
-		for (int i = 0; i < dInputSurfaceArray.elementCount(); i++) {
+	// loop all connected geometry and populate the hit, hitDistance, point 
+	// and normal variables using the closest intersection. 
+	if (useDistance || useNormal) {
+		for (unsigned int i = 0; i < dInputSurfaceArray.elementCount(); i++) {
 			MDataHandle dInputSurface = dInputSurfaceArray.inputValue();
 			MObject oInputSurface = dInputSurface.asNurbsSurface();
 
@@ -344,7 +299,7 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 						hit = true;
 						hitDistance = distance;
 
-						if (useRotate) {
+						if (useNormal) {
 							normal = fnInputSurface.normal(uParameter, vParameter, MSpace::kWorld, &status);
 							CHECK_MSTATUS_AND_RETURN_IT(status);
 						}
@@ -353,20 +308,77 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 			}
 			dInputSurfaceArray.next();
 		}
+		for (unsigned int i = 0; i < dInputMeshArray.elementCount(); i++) {
+			MDataHandle dInputMesh = dInputMeshArray.inputValue();
+			MObject oInputMesh = dInputMesh.asMesh();
+
+			if (!oInputMesh.isNull()) {
+				MFnMesh fnInputMesh(oInputMesh, &status);
+				CHECK_MSTATUS_AND_RETURN_IT(status);
+
+				int hitFace;
+				int hitTriangle;
+				float hitBary1;
+				float hitBary2;
+				float hitRayParam;
+
+				MFloatPoint hitPoint;
+				MMeshIsectAccelParams accelerator = fnInputMesh.autoUniformGridParams();
+
+				bool _hit = fnInputMesh.closestIntersection(
+					MFloatPoint(origin),
+					MFloatVector(direction),
+					NULL,
+					NULL,
+					false,
+					MSpace::kWorld,
+					hitDistance,
+					bidirectional,
+					&accelerator,
+					hitPoint,
+					&hitRayParam,
+					&hitFace,
+					&hitTriangle,
+					&hitBary1,
+					&hitBary2,
+					(float)1e-6,
+					&status
+				);
+				CHECK_MSTATUS_AND_RETURN_IT(status);
+
+				if (_hit) {
+					point = MVector(hitPoint);
+					hit = true;
+					hitDistance = (point - origin).length();
+
+					if (useNormal) {
+						status = fnInputMesh.getPolygonNormal(hitFace, normal, MSpace::kWorld);
+						CHECK_MSTATUS_AND_RETURN_IT(status);
+					}
+				}
+			}
+			dInputMeshArray.next();
+		}
 	}
-	
+
 	// calculate output matrix
 	MMatrix outputMatrix = MMatrix(inputMatrix);
-	if (hit && useTranslate) {
-		if (envelope != 1.0) {
-			point -= (point - origin) * (1 - envelope);
+
+	// perform a linear blend operation between the input point and the point 
+	// of closest intersection using the useDistance multiplier.
+	if (hit && useDistance) {
+		if (useDistance != 1.0) {
+			point -= (point - origin) * (1 - useDistance);
 		}
 		setMatrixRow(outputMatrix, 3, point);
 	}
-	if (hit && useRotate) {
+
+	// perform a slerp operation between the input normal and the normal of 
+	// the closest intersection using the useNormal multiplier.
+	if (hit && useNormal) {
 		int sideIndex = (along + 2) % 3;
 		int forwardIndex = (along + 1) % 3;
-		
+
 		MVector up = getMatrixRow<MVector>(inputMatrix, along);
 		MVector side = getMatrixRow<MVector>(inputMatrix, sideIndex);
 		MVector forward = getMatrixRow<MVector>(inputMatrix, forwardIndex);
@@ -379,9 +391,9 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 			normal *= -1;
 		}
 
-		if (envelope != 1.0) {
+		if (useNormal != 1.0) {
 			MQuaternion rotateQuat = normal.rotateTo(up);
-			MQuaternion slerpQuat = slerp(MQuaternion::identity, rotateQuat, 1 - envelope);
+			MQuaternion slerpQuat = slerp(MQuaternion::identity, rotateQuat, 1 - useNormal);
 			normal *= slerpQuat.asMatrix();
 		}
 
@@ -394,14 +406,14 @@ MStatus RaycastNode::compute(const MPlug& plug, MDataBlock& data) {
 		setMatrixRow(outputMatrix, forwardIndex, forward);
 	}
 
-	// set outputs
+	// set outputs and clean plugs
 	dOutputMatrix.setMMatrix(outputMatrix);
 	data.setClean(aOutputMatrix);
 
 	dHit.setBool(hit);
 	data.setClean(aHit);
 
-	dHitDistance.setFloat(hitDistance);
+	dHitDistance.setFloat((hit) ? hitDistance : -1);
 	data.setClean(aHitDistance);
 
 	return MS::kSuccess;

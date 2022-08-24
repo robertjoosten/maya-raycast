@@ -18,6 +18,14 @@
 #include <maya/MFnNumericAttribute.h>
 
 
+template <class T>
+T getMatrixRow(MMatrix& matrix, const int& row);
+
+
+template <class T>
+void setMatrixRow(MMatrix& matrix, const int& row, const T& value);
+
+
 class RaycastNode : public MPxNode {
 public:
 	RaycastNode();
@@ -33,8 +41,8 @@ public:
 	static MObject aAlong;
 	static MObject aBidirectional;
 	static MObject aReverse;
-	static MObject aUseTranslate;
-	static MObject aUseRotate;
+	static MObject aUseDistance;
+	static MObject aUseNormal;
 	static MObject aInputMatrix;
 	static MObject aInputMesh;
 	static MObject aInputSurface;
